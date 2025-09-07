@@ -1,4 +1,5 @@
 from typing import List
+import re
 from langchain_ollama import ChatOllama
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
@@ -58,5 +59,11 @@ class DocumentSummarizer:
         
         summary_chain = summary_prompt | self.llm | self.parser
         summary = summary_chain.invoke({"text": combined_text})
+        
+        # Remove hidden reasoning blocks like <think>...</think> (e.g., DeepSeek R1)
+        if summary:
+            summary = re.sub(r"<think>[\s\S]*?</think>", "", summary, flags=re.IGNORECASE)
+            # Clean up extra blank lines after removal
+            summary = re.sub(r"\n\s*\n\s*\n+", "\n\n", summary).strip()
         
         return summary
