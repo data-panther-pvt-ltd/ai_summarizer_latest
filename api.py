@@ -1,5 +1,5 @@
 from typing import Optional
-from fastapi import FastAPI, UploadFile, File, Form
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from content_loader import ContentLoader
@@ -17,16 +17,19 @@ app.add_middleware(
 )
 
 
+ALLOWED_MODELS = {"llama3.2:latest", "deepseek-r1:latest"}
+
+
 class TextPayload(BaseModel):
     text: str
-    model: str = "deepseek-r1:latest"
+    model: str
     length: str = "Medium (300-500 words)"
     style: str = "Professional"
 
 
 class UrlPayload(BaseModel):
     url: str
-    model: str = "deepseek-r1:latest"
+    model: str
     length: str = "Medium (300-500 words)"
     style: str = "Professional"
 
@@ -45,6 +48,8 @@ def map_length_to_instruction(length: str, custom: Optional[int] = None) -> str:
 
 @app.post("/summarize/text")
 def summarize_text(payload: TextPayload):
+    if payload.model not in ALLOWED_MODELS:
+        raise HTTPException(status_code=400, detail=f"Unsupported model. Allowed: {sorted(ALLOWED_MODELS)}")
     loader = ContentLoader()
     docs = loader.load_text(payload.text)
     summarizer = DocumentSummarizer(model_name=payload.model)
@@ -58,6 +63,8 @@ def summarize_text(payload: TextPayload):
 
 @app.post("/summarize/url")
 def summarize_url(payload: UrlPayload):
+    if payload.model not in ALLOWED_MODELS:
+        raise HTTPException(status_code=400, detail=f"Unsupported model. Allowed: {sorted(ALLOWED_MODELS)}")
     loader = ContentLoader()
     docs = loader.load_url(payload.url)
     summarizer = DocumentSummarizer(model_name=payload.model)
@@ -72,10 +79,12 @@ def summarize_url(payload: UrlPayload):
 @app.post("/summarize/file")
 async def summarize_file(
     file: UploadFile = File(...),
-    model: str = Form("deepseek-r1:latest"),
+    model: str = Form(...),
     length: str = Form("Medium (300-500 words)"),
     style: str = Form("Professional"),
 ):
+    if model not in ALLOWED_MODELS:
+        raise HTTPException(status_code=400, detail=f"Unsupported model. Allowed: {sorted(ALLOWED_MODELS)}")
     loader = ContentLoader()
     # FastAPI UploadFile provides .file-like interface; wrap to mimic Streamlit's attribute used in loader
     class TempUpload:

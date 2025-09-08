@@ -14,6 +14,8 @@ export default function Home() {
   const [model, setModel] = useState("llama3.2:latest");
   const [loading, setLoading] = useState(false);
   const [summary, setSummary] = useState<string | null>(null);
+  type ResultMeta = { model: string; length: string; style: string };
+  const [resultMeta, setResultMeta] = useState<ResultMeta | null>(null);
 
   const canSummarize = useMemo(() => {
     if (activeTab === "text") return textInput.trim().length > 0;
@@ -27,32 +29,39 @@ export default function Home() {
     if (!canSummarize) return;
     setLoading(true);
     setSummary(null);
+    setResultMeta(null);
     try {
+      const requestModel = model;
+      const requestLength = length;
+      const requestStyle = style;
       if (activeTab === "text") {
         const res = await fetch(`${apiBase}/summarize/text`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: textInput, model, length, style }),
+          body: JSON.stringify({ text: textInput, model: requestModel, length: requestLength, style: requestStyle }),
         });
         const data = await res.json();
         setSummary(data.summary || "");
+        setResultMeta({ model: requestModel, length: requestLength, style: requestStyle });
       } else if (activeTab === "url") {
         const res = await fetch(`${apiBase}/summarize/url`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: urlInput, model, length, style }),
+          body: JSON.stringify({ url: urlInput, model: requestModel, length: requestLength, style: requestStyle }),
         });
         const data = await res.json();
         setSummary(data.summary || "");
+        setResultMeta({ model: requestModel, length: requestLength, style: requestStyle });
       } else if (activeTab === "file" && fileObj) {
         const form = new FormData();
         form.append("file", fileObj);
-        form.append("model", model);
-        form.append("length", length);
-        form.append("style", style);
+        form.append("model", requestModel);
+        form.append("length", requestLength);
+        form.append("style", requestStyle);
         const res = await fetch(`${apiBase}/summarize/file`, { method: "POST", body: form });
         const data = await res.json();
         setSummary(data.summary || "");
+        setResultMeta({ model: requestModel, length: requestLength, style: requestStyle });
       }
     } catch (err) {
       setSummary("Failed to generate summary. Ensure the API server is running on 8000.");
@@ -222,11 +231,13 @@ export default function Home() {
             <div className="mt-4 text-sm leading-6">
               {summary ? (
                 <div className="space-y-4">
-                  <div className="flex flex-wrap gap-2">
-                    <span className="chip">Model: {model}</span>
-                    <span className="chip">Length: {length}</span>
-                    <span className="chip">Style: {style}</span>
-                  </div>
+                  {resultMeta && (
+                    <div className="flex flex-wrap gap-2">
+                      <span className="chip">Model: {resultMeta.model}</span>
+                      <span className="chip">Length: {resultMeta.length}</span>
+                      <span className="chip">Style: {resultMeta.style}</span>
+                    </div>
+                  )}
                   <div className="prose prose-sm max-w-none">
                     <p>{summary}</p>
                   </div>
