@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "AI Summarizer",
-  description: "Summarize text, files, and URLs with AI",
+  description: "Summarize content using AI assistance",
 };
 
 export default function RootLayout({
@@ -25,25 +25,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <div className="min-h-screen grid grid-rows-[auto_1fr_auto]">
-          <header className="border-b border-border/60 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-            <div className="mx-auto max-w-5xl px-6 py-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-
-                <span className="font-semibold tracking-tight">AI Summarizer</span>
-              </div>
-
-            </div>
-          </header>
-          <main className="mx-auto max-w-5xl w-full px-6 py-10">{children}</main>
-          <footer className="border-t border-border/60">
-            <div className="mx-auto max-w-5xl px-6 py-6 text-sm text-muted-foreground">
-              copyright@datapanther
-            </div>
-          </footer>
-        </div>
+        {children}
       </body>
     </html>
   );
