@@ -1,6 +1,7 @@
 from typing import List
 import re
 from langchain_ollama import ChatOllama
+from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain.schema import Document
@@ -9,7 +10,13 @@ class DocumentSummarizer:
     """Handles direct document summarization without chunking"""
     
     def __init__(self, model_name: str = "gemma3:1b"):
-        self.llm = ChatOllama(model=model_name)
+        # Support both local Ollama models and hosted OpenAI models using a prefix scheme
+        # Example values: "llama3.2:latest" (Ollama), "deepseek-r1:latest" (Ollama), "openai:gpt-4o-mini" (OpenAI)
+        if model_name.startswith("openai:"):
+            openai_model = model_name.split(":", 1)[1] or "gpt-4o-mini"
+            self.llm = ChatOpenAI(model=openai_model, temperature=0.3)
+        else:
+            self.llm = ChatOllama(model=model_name)
         self.parser = StrOutputParser()
     
     def combine_documents(self, documents: List[Document]) -> str:

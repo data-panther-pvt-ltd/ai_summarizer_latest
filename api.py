@@ -17,7 +17,8 @@ app.add_middleware(
 )
 
 
-ALLOWED_MODELS = {"llama3.2:latest", "deepseek-r1:latest"}
+# Allow both Ollama models and OpenAI models (prefixed with "openai:")
+ALLOWED_MODELS = {"llama3.2:latest", "deepseek-r1:latest", "openai:gpt-4o-mini"}
 
 
 class TextPayload(BaseModel):
