@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import { DocumentTextIcon, LinkIcon, DocumentArrowDownIcon, ArrowLeftOnRectangleIcon } from "@heroicons/react/24/outline";
 import LogoutButton from "@/app/components/LogoutButton";
 import { useRouter } from "next/navigation";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 type TabKey = "text" | "file" | "url";
 
@@ -328,8 +330,8 @@ export default function Home() {
                           </span>
                         </div>
                       )}
-                      <div className="prose prose-sm max-w-none text-gray-700">
-                        <p className="whitespace-pre-line">{summary}</p>
+                      <div className="prose prose-gray max-w-none text-gray-800 prose-headings:text-gray-900 prose-headings:font-semibold prose-h1:text-xl prose-h2:text-lg prose-h3:text-base prose-p:leading-relaxed prose-strong:text-gray-900 prose-strong:font-semibold prose-em:italic prose-ul:list-disc prose-ol:list-decimal prose-li:marker:text-gray-400">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{summary}</ReactMarkdown>
                       </div>
                     </div>
                   ) : (
