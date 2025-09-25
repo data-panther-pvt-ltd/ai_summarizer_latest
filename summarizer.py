@@ -1,6 +1,7 @@
 from typing import List
 import re
 from langchain_ollama import ChatOllama
+from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain.schema import Document
@@ -8,8 +9,15 @@ from langchain.schema import Document
 class DocumentSummarizer:
     """Handles direct document summarization without chunking"""
     
-    def __init__(self, model_name: str = "gemma3:1b"):
-        self.llm = ChatOllama(model=model_name)
+    def __init__(self, model_name: str = "gemma3:1b", openai_api_key: str | None = None):
+        if model_name.lower().startswith("gpt-") or model_name.lower().startswith("o"):
+            # Use OpenAI compatible models (e.g., gpt-4o, gpt-4o-mini, gpt-4.1)
+            if not openai_api_key:
+                raise ValueError("OpenAI API key is required for OpenAI models")
+            self.llm = ChatOpenAI(model=model_name, api_key=openai_api_key)
+        else:
+            # Disallow Ollama in this configuration
+            raise ValueError("Only OpenAI models are supported. Choose a gpt-* model.")
         self.parser = StrOutputParser()
     
     def combine_documents(self, documents: List[Document]) -> str:
@@ -29,18 +37,24 @@ class DocumentSummarizer:
         }
         return style_prompts.get(style, "Write in a clear and professional manner.")
     
-    def summarize_documents(self, documents: List[Document], target_length: str = "300-500 words", style: str = "Professional") -> str:
+    def summarize_documents(self, documents: List[Document], target_length: str = "300-500 words", style: str = "Professional", language: str = "en") -> str:
         print("target len: ", target_length)
         print("style: ", style)
         combined_text = self.combine_documents(documents)
         
         style_instruction = self.get_style_prompt(style)
+        language_instruction = (
+            "Write the summary in Arabic. Use right-to-left punctuation and Arabic numerals when appropriate."
+            if language == "ar"
+            else "Write the summary in English."
+        )
         
         summary_prompt = ChatPromptTemplate.from_template(
             f"""
             You are a professional summarizer. Follow these strict instructions:
 
             - {style_instruction}
+            - {language_instruction}
             - Craft a summary that is detailed, thorough, in-depth, and complex, while maintaining clarity and conciseness.
             - Incorporate main ideas and essential information, eliminating extraneous language and focusing on critical aspects.
             - Rely strictly on the provided text, without including external information
